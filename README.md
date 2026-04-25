@@ -33,3 +33,4 @@ python server.py
 5. **`query_asientos`**: Chequeo de estados financieros y entradas contables.
 # perseo
 # kushki
+# perseo
