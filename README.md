@@ -32,3 +32,4 @@ python server.py
 4. **`update_producto`**: Modifica configuraciones de inventario ya existentes.
 5. **`query_asientos`**: Chequeo de estados financieros y entradas contables.
 # perseo
+# kushki
