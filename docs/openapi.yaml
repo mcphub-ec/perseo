@@ -1,0 +1,326 @@
+openapi: 3.0.0
+info:
+  title: API Perseo Software Contable
+  description: Especificación robusta para la API de Perseo. ATENCIÓN MCP - Todos los endpoints son POST y la autenticación (api_key) se envía siempre dentro del cuerpo (body) del JSON, nunca en los headers.
+  version: 1.0.0
+servers:
+  - url: https://{url_servidor}/api
+    description: URL del Servidor Perseo Web o Local. Reemplazar {url_servidor} con el dominio proporcionado (ej. perseo-data-c1.app).
+    variables:
+      url_servidor:
+        default: "perseo-data-c1.app"
+paths:
+  /facturas_crear:
+    post:
+      summary: Crear Factura o Nota de Crédito
+      operationId: createFactura
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FacturaCrearInput'
+      responses:
+        '200':
+          description: Factura creada y guardada en el sistema.
+
+  /facturas_consulta:
+    post:
+      summary: Consultar Facturas
+      description: Recupera facturas mediante filtros. Usa POST a pesar de ser una consulta.
+      operationId: queryFacturas
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FacturaConsultaInput'
+      responses:
+        '200':
+          description: Resultados de facturas incluyendo datos del SRI y PDF opcional.
+
+  /productos_crear:
+    post:
+      summary: Crear nuevo Producto
+      operationId: createProducto
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductoInput'
+      responses:
+        '200':
+          description: Producto creado en el catálogo.
+
+  /productos_editar:
+    post:
+      summary: Editar Producto existente
+      description: Modifica un producto. Requiere el 'productosid' dentro del payload.
+      operationId: updateProducto
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductoInput'
+      responses:
+        '200':
+          description: Producto modificado.
+
+  /asientoscontables_consulta:
+    post:
+      summary: Consultar Asientos Contables
+      operationId: queryAsientos
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AsientoConsultaInput'
+      responses:
+        '200':
+          description: Lista de asientos contables filtrados.
+
+components:
+  schemas:
+    # --- ESQUEMAS DE FACTURACIÓN ---
+    FacturaConsultaInput:
+      type: object
+      required:
+        - api_key
+      properties:
+        api_key:
+          type: string
+          description: Clave secreta generada en el Administrador de Integraciones de Perseo.
+        facturaid:
+          type: string
+          description: ID interno de la factura específica a consultar.
+        dias:
+          type: string
+          description: Número de días hacia atrás para extraer historial.
+        generarpdf:
+          type: boolean
+          description: Retornar la versión en PDF del documento.
+
+    FacturaCrearInput:
+      type: object
+      required:
+        - api_key
+        - registro
+      properties:
+        api_key:
+          type: string
+          description: Clave de acceso a la API.
+        controlexistencia:
+          type: boolean
+          default: true
+        registro:
+          type: array
+          items:
+            type: object
+            properties:
+              facturas:
+                $ref: '#/components/schemas/FacturaCabecera'
+
+    FacturaCabecera:
+      type: object
+      properties:
+        secuenciasid:
+          type: integer
+        sri_documentoscodigo:
+          type: string
+          enum: ["01", "04"]
+          description: 01=Factura, 04=Nota de Crédito
+        forma_pago_empresaid:
+          type: integer
+        forma_pago_sri_codigo:
+          type: string
+        cajasid:
+          type: integer
+        centros_costosid:
+          type: integer
+        almacenesid:
+          type: integer
+        facturadoresid:
+          type: integer
+        vendedoresid:
+          type: integer
+        clientesid:
+          type: integer
+        tarifasid:
+          type: integer
+        establecimiento:
+          type: string
+          maxLength: 3
+        puntoemision:
+          type: string
+          maxLength: 3
+        secuencial:
+          type: string
+          maxLength: 15
+        emision:
+          type: string
+          description: Fecha de emisión (YYYYMMDD)
+        vence:
+          type: string
+          description: Fecha de vencimiento (YYYYMMDD)
+        subtotal:
+          type: number
+          format: float
+        subtotalconiva:
+          type: number
+          format: float
+        subtotalsiniva:
+          type: number
+          format: float
+        total_iva:
+          type: number
+          format: float
+        total:
+          type: number
+          format: float
+        concepto:
+          type: string
+        detalles:
+          type: array
+          items:
+            $ref: '#/components/schemas/FacturaDetalle'
+        movimiento:
+          type: array
+          items:
+            $ref: '#/components/schemas/FacturaMovimiento'
+
+    FacturaDetalle:
+      type: object
+      properties:
+        productosid:
+          type: integer
+        medidasid:
+          type: integer
+        cantidaddigitada:
+          type: number
+          format: float
+        cantidad:
+          type: number
+          format: float
+        precio:
+          type: number
+          format: float
+        preciovisible:
+          type: number
+          format: float
+        precioiva:
+          type: number
+          format: float
+        descuento:
+          type: number
+          format: float
+        iva:
+          type: number
+          format: float
+        servicio:
+          type: boolean
+
+    FacturaMovimiento:
+      type: object
+      properties:
+        forma_pago_empresaid:
+          type: integer
+        forma_pago_sri:
+          type: string
+        cajasid:
+          type: integer
+        importe:
+          type: number
+          format: float
+        fechamovimiento:
+          type: string
+          description: YYYYMMDD
+        numerochequevoucher:
+          type: string
+
+    # --- ESQUEMAS DE PRODUCTOS ---
+    ProductoInput:
+      type: object
+      required:
+        - api_key
+        - registros
+      properties:
+        api_key:
+          type: string
+        registros:
+          type: array
+          items:
+            type: object
+            properties:
+              productos:
+                $ref: '#/components/schemas/ProductoObjeto'
+
+    ProductoObjeto:
+      type: object
+      properties:
+        productosid:
+          type: integer
+          description: OBLIGATORIO solo en /productos_editar
+        productocodigo:
+          type: string
+        descripcion:
+          type: string
+        sri_tipos_ivas_codigo:
+          type: integer
+          description: "2: IVA Activo (12/15%), 0: IVA 0%"
+        productos_lineasid:
+          type: integer
+        productos_categoriasid:
+          type: integer
+        estado:
+          type: boolean
+        venta:
+          type: boolean
+        controlnegativos:
+          type: boolean
+        servicio:
+          type: boolean
+        costoactual:
+          type: number
+          format: float
+        fechaultimacompra:
+          type: string
+        tarifas:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductoTarifa'
+
+    ProductoTarifa:
+      type: object
+      properties:
+        tarifasid:
+          type: integer
+        medidasid:
+          type: integer
+        precioiva:
+          type: number
+          format: float
+        precio:
+          type: number
+          format: float
+
+    # --- ESQUEMAS CONTABLES ---
+    AsientoConsultaInput:
+      type: object
+      required:
+        - api_key
+      properties:
+        api_key:
+          type: string
+        fechadesde:
+          type: string
+          description: Formato YYYYMMDD
+        fechahasta:
+          type: string
+          description: Formato YYYYMMDD
+        codigocontable:
+          type: string
+        id:
+          type: string

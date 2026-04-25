@@ -1,36 +1,90 @@
-# Perseo MCP Server
+# 🇪🇨 MCP Perseo
 
-Servidor oficial de integración con la API de Perseo (Ecuador) a través del estándar Model Context Protocol (MCP). Configurado para ser usado en plataformas como OpenWebUI o herramientas locales de agentes mediante `HTTP Streamable` en el puerto `8005`.
+Servidor Model Context Protocol (MCP) para la integración con **el sistema ERP Perseo**.
 
-## Características
-- Todas las interacciones inyectan silenciosamente la `api_key` como lo requiere la arquitectura técnica de Perseo.
-- Peticiones siempre ejecutadas por método `POST`, abstraídas a llamados semánticamente correctos de herramientas (`create_factura`, `query_facturas`, etc.).
-- Respeta estrictamente los requerimientos de la Especificación de la API de Perseo (OpenAPI 3.0).
+Parte del ecosistema oficial de [MCP Hub Ecuador](https://github.com/mcphub-ec/hub).
 
-## Instalación y Configuración
+> [!IMPORTANT]
+> **🤖 Nota para Agentes IA:** Antes de interactuar con este servidor, por favor revisa el [Agent Cheatsheet](https://github.com/mcphub-ec/hub/blob/main/agent-cheatsheet.md) en nuestro Hub principal para comprender las reglas de negocio, cálculo de IVA (15%) y formatos de identificación de Ecuador.
 
-```bash
-# 1. Copiar archivo de entorno y configurar
-cp .env.example .env
+## 🚀 Características
 
-# EDITA .env con tu entorno:
-# PERSEO_API_KEY=tu_clave_secreta_aqui
-# PERSEO_URL_SERVIDOR=perseo-data-c1.app
+-   Integración directa con el ERP Perseo.
+-   Consulta y creación de transacciones contables.
+-   **Arquitectura Enterprise:** Imágenes Docker ultra-ligeras con _Healthchecks_ nativos, logs estructurados en JSON y validación continua de seguridad.
 
-# 2. Instalar las dependencias (dentro de un venv o global si eres persistente)
-pip install -r ../requirements.txt  # Asumiendo que comparten un requirements
-# O manualmente: pip install mcp httpx python-dotenv uvicorn
+## 🛠️ Herramientas Disponibles
 
-# 3. Iniciar el Servidor
-python server.py
+-   `consultar_datos_perseo`: Consulta de información del ERP.
+
+## 📦 Instalación y Configuración
+
+### 1\. Variables de Entorno
+
+Este servidor es completamente _stateless_. Copia el archivo `.env.example` a `.env` y configura tus datos. **Nunca hagas commit de este archivo.**
+
+```env
+PERSEO_API_KEY="tu_api_key_aqui"
+PERSEO_API_URL="https://api.perseo.ec"
 ```
 
-## Herramientas Ofertadas
-1. **`create_factura`**: Genera facturas (código "01") y notas de crédito.
-2. **`query_facturas`**: Busca facturas mediante filtros.
-3. **`create_producto`**: Inserta catálogos nuevos.
-4. **`update_producto`**: Modifica configuraciones de inventario ya existentes.
-5. **`query_asientos`**: Chequeo de estados financieros y entradas contables.
-# perseo
-# kushki
-# perseo
+### 2\. Despliegue con Docker (Recomendado)
+
+Para entornos de producción o pruebas limpias, recomendamos usar nuestra imagen oficial alojada en GitHub Container Registry (`ghcr.io`).
+
+**Vía Docker CLI:**
+
+```bash
+docker run -d \
+  --name mcp-perseo \
+  --env-file .env \
+  ghcr.io/mcphub-ec/mcp-perseo:latest
+```
+
+**Vía Docker Compose:**
+
+```yaml
+services:
+  mcp-perseo:
+    image: ghcr.io/mcphub-ec/mcp-perseo:latest
+    container_name: mcp-perseo
+    env_file:
+      - .env
+    restart: unless-stopped
+```
+
+### 3\. Uso con Claude Desktop (Local)
+
+Si deseas conectarlo directamente a tu cliente de Claude para desarrollo local, añade la siguiente configuración a tu archivo `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "mcp-perseo": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "--env-file",
+        "/ruta/absoluta/a/tu/.env",
+        "ghcr.io/mcphub-ec/mcp-perseo:latest"
+      ]
+    }
+  }
+}
+```
+
+_(Nota: También puedes correrlo directamente con `python -m server` si clonas el repositorio y manejas tu propio entorno virtual)._
+
+## 🔒 Seguridad y Gobernanza
+
+Este proyecto sigue estándares estrictos de seguridad:
+
+-   **Stateless:** No almacena credenciales ni certificados en bases de datos.
+-   **Escaneo de Vulnerabilidades:** Cada Pull Request es analizado automáticamente con `bandit` y `detect-secrets`.
+-   **Responsible Disclosure:** Si encuentras una vulnerabilidad, por favor no abras un Issue público. Revisa nuestro [SECURITY.md](https://github.com/mcphub-ec/hub/blob/main/SECURITY.md) y contáctanos directamente a `security@mcphub.ec`.
+
+## 🤝 Contribuir
+
+Si deseas proponer mejoras, por favor revisa nuestra [Guía de Contribución](https://github.com/mcphub-ec/hub/blob/main/CONTRIBUTING.md) en el repositorio central. ¡Todos los Pull Requests que pasen los checks de CI/CD son bienvenidos!
