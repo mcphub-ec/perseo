@@ -138,8 +138,8 @@ async def _perseo_request(path: str, payload: dict, *, url_servidor: str) -> dic
 
 
 @mcp.tool()
-async def create_factura(    url_servidor: str,
-    registro: List[Dict[str, Any]],
+async def create_factura(    registro: List[Dict[str, Any]],
+    url_servidor: str | None = None,
     controlexistencia: bool = True) -> dict:
     """⚠️ MUTATION — Create an invoice or credit note in Perseo Accounting.
 
@@ -147,7 +147,6 @@ async def create_factura(    url_servidor: str,
     Supported types: '01' = Invoice (Factura), '04' = Credit Note (Nota de Crédito).
 
     REQUIRED PARAMETERS:
-      url_servidor (str): Perseo server hostname. Example: "perseo-data-c1.app"
       registro (list[dict]): Array of invoice objects to insert.
                              Each element must follow this structure:
                              [{"facturas": {
@@ -167,8 +166,7 @@ async def create_factura(    url_servidor: str,
       {"success": True/False, "facturaid": int, "mensaje": str}
 
     EXAMPLE CALL:
-      create_factura(api_key="xxx", url_servidor="perseo-data-c1.app",
-                     registro=[{"facturas": {"tipo": "01", "fecha": "20250130", ...}}])
+      create_factura(registro=[{"facturas": {"tipo": "01", "fecha": "20250130", ...}}])
     """
     payload = {
         "controlexistencia": controlexistencia,
@@ -178,18 +176,15 @@ async def create_factura(    url_servidor: str,
 
 
 @mcp.tool()
-async def query_facturas(    url_servidor: str,
-    facturaid: Optional[str] = None,
+async def query_facturas(    facturaid: Optional[str] = None,
     dias: Optional[str] = None,
-    generarpdf: bool = False) -> dict:
+    generarpdf: bool = False,
+    url_servidor: str | None = None) -> dict:
     """Search and retrieve invoices from Perseo by ID or recent date range.
 
     Use this tool to look up a specific invoice by its internal ID, or to
     retrieve recent invoice history for the last N days.
     At least one filter (facturaid or dias) is recommended.
-
-    REQUIRED PARAMETERS:
-      url_servidor (str): Perseo server hostname. Example: "perseo-data-c1.app"
 
     OPTIONAL PARAMETERS:
       facturaid (str): Internal Perseo invoice ID to fetch a specific document.
@@ -204,8 +199,8 @@ async def query_facturas(    url_servidor: str,
       clienteid, total, estado. If generarpdf=True, includes a Base64 PDF attachment.
 
     EXAMPLE CALLS:
-      query_facturas(api_key="xxx", url_servidor="perseo-data-c1.app", dias="30")
-      query_facturas(api_key="xxx", url_servidor="perseo-data-c1.app", facturaid="12345", generarpdf=True)
+      query_facturas(dias="30")
+      query_facturas(facturaid="12345", generarpdf=True)
     """
     payload: Dict[str, Any] = {"generarpdf": generarpdf}
     if facturaid:
@@ -217,14 +212,13 @@ async def query_facturas(    url_servidor: str,
 
 
 @mcp.tool()
-async def create_producto(    url_servidor: str,
-    registros: List[Dict[str, Any]]) -> dict:
+async def create_producto(    registros: List[Dict[str, Any]],
+    url_servidor: str | None = None) -> dict:
     """⚠️ MUTATION — Add one or more new products to the Perseo product catalog.
 
     Use this tool to create new products or services in Perseo.
 
     REQUIRED PARAMETERS:
-      url_servidor (str): Perseo server hostname. Example: "perseo-data-c1.app"
       registros (list[dict]): Array of product objects to create.
                               Each element must follow this structure:
                               [{"productos": {
@@ -240,8 +234,7 @@ async def create_producto(    url_servidor: str,
       {"success": True/False, "productosid": int, "mensaje": str}
 
     EXAMPLE CALL:
-      create_producto(api_key="xxx", url_servidor="perseo-data-c1.app",
-                      registros=[{"productos": {"codigo": "PROD-001", "nombre": "Laptop",
+      create_producto(registros=[{"productos": {"codigo": "PROD-001", "nombre": "Laptop",
                                                 "codigoiva": 2, "pvp": 950.00}}])
     """
     payload = {"registros": registros}
@@ -249,15 +242,14 @@ async def create_producto(    url_servidor: str,
 
 
 @mcp.tool()
-async def update_producto(    url_servidor: str,
-    registros: List[Dict[str, Any]]) -> dict:
+async def update_producto(    registros: List[Dict[str, Any]],
+    url_servidor: str | None = None) -> dict:
     """⚠️ MUTATION — Update one or more existing products in the Perseo catalog.
 
     Use this tool to modify product fields such as price, name, or VAT code.
     The field productosid is MANDATORY inside each product object.
 
     REQUIRED PARAMETERS:
-      url_servidor (str): Perseo server hostname. Example: "perseo-data-c1.app"
       registros (list[dict]): Array of product objects to update.
                               Each element MUST include productosid:
                               [{"productos": {
@@ -271,26 +263,22 @@ async def update_producto(    url_servidor: str,
       {"success": True/False, "mensaje": str}
 
     EXAMPLE CALL:
-      update_producto(api_key="xxx", url_servidor="perseo-data-c1.app",
-                      registros=[{"productos": {"productosid": 1234, "pvp": 12.50}}])
+      update_producto(registros=[{"productos": {"productosid": 1234, "pvp": 12.50}}])
     """
     payload = {"registros": registros}
     return await _perseo_request("/productos_editar", payload, url_servidor=url_servidor)
 
 
 @mcp.tool()
-async def query_asientos(    url_servidor: str,
-    fechadesde: Optional[str] = None,
+async def query_asientos(    fechadesde: Optional[str] = None,
     fechahasta: Optional[str] = None,
     codigocontable: Optional[str] = None,
-    id: Optional[str] = None) -> dict:
+    id: Optional[str] = None,
+    url_servidor: str | None = None) -> dict:
     """Search accounting journal entries (asientos contables) in Perseo.
 
     Use this tool to retrieve accounting entries within a date range, by
     account code from Ecuador's standard chart of accounts (PGCE), or by ID.
-
-    REQUIRED PARAMETERS:
-      url_servidor (str): Perseo server hostname. Example: "perseo-data-c1.app"
 
     OPTIONAL PARAMETERS:
       fechadesde (str): Start date in YYYYMMDD format. Example: "20250101"
@@ -304,10 +292,8 @@ async def query_asientos(    url_servidor: str,
       and detalles (list with cuenta_id, centro_costo_id, tipo D/H, valor).
 
     EXAMPLE CALLS:
-      query_asientos(api_key="xxx", url_servidor="perseo-data-c1.app",
-                     fechadesde="20250101", fechahasta="20250131")
-      query_asientos(api_key="xxx", url_servidor="perseo-data-c1.app",
-                     codigocontable="1.1.1.01")
+      query_asientos(fechadesde="20250101", fechahasta="20250131")
+      query_asientos(codigocontable="1.1.1.01")
     """
     payload: Dict[str, Any] = {}
     if fechadesde:
