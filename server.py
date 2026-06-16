@@ -76,6 +76,16 @@ def _resolve_base_url(url_servidor: str) -> str:
             "Perseo url_servidor is required (e.g. 'perseo-data-c1.app'). "
             "Pass `url_servidor` as a tool parameter."
         )
+    # SSRF guard: block URLs that resolve to private IPs / localhost / link-local
+    if not resolved or "/" in resolved or " " in resolved:
+        raise ValueError(f"url_servidor inválido: {resolved!r}")
+    # Whitelist: perseo-data-cN.app where N is 1-9 (Perseo deployment pattern)
+    import re as _re
+    if not _re.match(r"^[a-z0-9][a-z0-9.\-]*\.(app|com|ec|net|io|local)$", resolved):
+        raise ValueError(
+            f"url_servidor {resolved!r} no es un hostname válido. "
+            "Solo se aceptan dominios públicos (app, com, ec, net, io, local)."
+        )
     return f"https://{resolved}/api"
 
 
